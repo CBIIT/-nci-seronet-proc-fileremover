@@ -1,0 +1,2 @@
+# nci-seronet-proc-fileremover
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/e0b5c3e5d20142d59f480f471be97794)](https://app.codacy.com/gh/CBIIT/nci-seronet-proc-fileremover?utm_source=github.com&utm_medium=referral&utm_content=CBIIT/nci-seronet-proc-fileremover&utm_campaign=Badge_Grade)
