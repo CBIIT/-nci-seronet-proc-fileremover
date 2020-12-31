@@ -4,6 +4,7 @@ import json
 import logging
 from seronetCopyFiles import *
 from seronetdBUtilities import *
+from seronetSnsMessagePublisher import *
 
 print('Loading function')
 
@@ -12,13 +13,11 @@ s3_client = boto3.client("s3")
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 ssm = boto3.client("ssm")
-
+sns = boto3.client('sns')
 
 
 
 def lambda_handler(event, context):
-   
-  
 
  try:
   host=ssm.get_parameter(Name="db_host", WithDecryption=True).get("Parameter").get("Value")
@@ -27,6 +26,7 @@ def lambda_handler(event, context):
   password=ssm.get_parameter(Name="lambda_db_password", WithDecryption=True).get("Parameter").get("Value")
   destination_bucket_name = ssm.get_parameter(Name="file_destination_bucket", WithDecryption=True).get("Parameter").get("Value")
   job_table_name='table_file_remover'
+  
   
 
   
@@ -91,10 +91,17 @@ def lambda_handler(event, context):
         #call the function to copy file
         result=fileCopy(s3_client, event, destination_bucket_name)
         resultTuple=(result['file_name'], result['file_location'], result['file_added_on'], result['file_last_processed_on'], result['file_status'], result['file_origin'], result['file_type'], result['file_action'], result['file_submitted_by'], result['updated_by'])
+        
         #record the copy file result 
         excution2="INSERT INTO "+ job_table_name+" VALUES (NULL,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)" %resultTuple
-        
         executeDB(mydb,excution2)
+        
+        #publish message to sns topic
+        TopicArn_Success=ssm.get_parameter(Name="TopicArn_Success", WithDecryption=True).get("Parameter").get("Value")
+        TopicArn_Failure = ssm.get_parameter(Name="TopicArn_Failure", WithDecryption=True).get("Parameter").get("Value")
+        response=sns_publisher(result,TopicArn_Success,TopicArn_Failure)
+        print(response)
+        
         
         statusCode=200
         message='File Processed'
@@ -115,17 +122,3 @@ def lambda_handler(event, context):
        'body': json.dumps(message)
  }  
   
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-
-   
- 
