@@ -1,4 +1,3 @@
-
 import boto3
 import json
 import logging
@@ -14,6 +13,8 @@ logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 ssm = boto3.client("ssm")
 sns = boto3.client('sns')
+
+
 
 
 
@@ -68,7 +69,7 @@ def lambda_handler(event, context):
    
     # determining which cbc bucket the file came from
     prefix='' 
-    result=[]
+    #result=[]
    
    
        
@@ -97,6 +98,7 @@ def lambda_handler(event, context):
         executeDB(mydb,excution2)
         
         #publish message to sns topic
+        result['previous_function']="filecopy"
         TopicArn_Success=ssm.get_parameter(Name="TopicArn_Success", WithDecryption=True).get("Parameter").get("Value")
         TopicArn_Failure = ssm.get_parameter(Name="TopicArn_Failure", WithDecryption=True).get("Parameter").get("Value")
         response=sns_publisher(result,TopicArn_Success,TopicArn_Failure)
@@ -122,3 +124,17 @@ def lambda_handler(event, context):
        'body': json.dumps(message)
  }  
   
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+
+   
+ 
