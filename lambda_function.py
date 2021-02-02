@@ -5,6 +5,12 @@ from seronetCopyFiles import *
 from seronetdBUtilities import *
 from seronetSnsMessagePublisher import *
 
+
+
+
+
+
+
 print('Loading function')
 
 # boto3 S3 initialization
@@ -13,6 +19,7 @@ logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 ssm = boto3.client("ssm")
 sns = boto3.client('sns')
+
 
 
 
@@ -99,6 +106,10 @@ def lambda_handler(event, context):
         
         #publish message to sns topic
         result['previous_function']="filecopy"
+        #add two more values to control whether or not send email or slack message
+        result['send_email']="yes"
+        result['send_slack']="yes"
+        
         TopicArn_Success=ssm.get_parameter(Name="TopicArn_Success", WithDecryption=True).get("Parameter").get("Value")
         TopicArn_Failure = ssm.get_parameter(Name="TopicArn_Failure", WithDecryption=True).get("Parameter").get("Value")
         response=sns_publisher(result,TopicArn_Success,TopicArn_Failure)
@@ -107,6 +118,7 @@ def lambda_handler(event, context):
         
         statusCode=200
         message='File Processed'
+        mydb.close()
        
     else:
         statusCode=400
