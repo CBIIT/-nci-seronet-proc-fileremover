@@ -1,9 +1,9 @@
 import boto3
 import json
 import logging
-from seronetCopyFiles import *
-from seronetdBUtilities import *
-from seronetSnsMessagePublisher import *
+from seronetCopyFiles import fileCopy
+from seronetdBUtilities import connectToDB
+from seronetSnsMessagePublisher import sns_publisher
 
 
 def lambda_handler(event, context):
@@ -13,7 +13,7 @@ def lambda_handler(event, context):
     logger = logging.getLogger()
     logger.setLevel(logging.INFO)
     ssm = boto3.client("ssm")
-    sns = boto3.client('sns')
+    
     
     try:
       host = ssm.get_parameter(Name="db_host", WithDecryption=True).get("Parameter").get("Value")
@@ -39,20 +39,20 @@ def lambda_handler(event, context):
       source_bucket_name = messageJson['bucketName']
         
       # determining which cbc bucket the file came from
-      prefix = '' 
-        
+      prefix = ''
+      
       # Filename of object (with path) and Etag
       file_key_name = messageJson['key']
       
       print('Key file: '+ file_key_name)
       
       if "guid" in messageJson:
-       if messageJson['scanResult'] == "Clean": 
-        # defining constants for CBCs
-        CBC01 = 'cbc01'
-        CBC02 = 'cbc02'
-        CBC03 = 'cbc03'
-        CBC04 = 'cbc04'
+          if messageJson['scanResult'] == "Clean":
+              # defining constants for CBCs
+              CBC01 = 'cbc01'
+              CBC02 = 'cbc02'
+              CBC03 = 'cbc03'
+              CBC04 = 'cbc04'
        
       
         
@@ -71,7 +71,7 @@ def lambda_handler(event, context):
         elif  CBC03 in source_bucket_name:
             prefix=CBC03
         elif  CBC04 in source_bucket_name:
-            prefix=CBC04        
+            prefix=CBC04
         else:
             prefix='UNMATCHED'
        
@@ -107,7 +107,7 @@ def lambda_handler(event, context):
                 message='File Processed'
             except Exception as e:
                 raise e
-            finally: 
+            finally:
                 #close the connection
                 mydb.commit()
                 mydb.close()
@@ -123,7 +123,7 @@ def lambda_handler(event, context):
     return {
        'statusCode': statusCode,
        'body': json.dumps(message)
- }  
+    }  
   
   
   
