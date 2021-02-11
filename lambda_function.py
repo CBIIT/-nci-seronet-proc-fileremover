@@ -16,14 +16,12 @@ def lambda_handler(event, context):
     sns = boto3.client('sns')
     
     try:
-      host=ssm.get_parameter(Name="db_host", WithDecryption=True).get("Parameter").get("Value")
-      user=ssm.get_parameter(Name="lambda_db_username", WithDecryption=True).get("Parameter").get("Value")
+      host = ssm.get_parameter(Name="db_host", WithDecryption=True).get("Parameter").get("Value")
+      user = ssm.get_parameter(Name="lambda_db_username", WithDecryption=True).get("Parameter").get("Value")
       dbname = ssm.get_parameter(Name="jobs_db_name", WithDecryption=True).get("Parameter").get("Value")
-      password=ssm.get_parameter(Name="lambda_db_password", WithDecryption=True).get("Parameter").get("Value")
+      password = ssm.get_parameter(Name="lambda_db_password", WithDecryption=True).get("Parameter").get("Value")
       destination_bucket_name = ssm.get_parameter(Name="file_destination_bucket", WithDecryption=True).get("Parameter").get("Value")
-      JOB_TABLE_NAME='table_file_remover'
-      
-      
+      JOB_TABLE_NAME = 'table_file_remover'
     
       
       
@@ -34,29 +32,27 @@ def lambda_handler(event, context):
        
       source_bucket_name = messageJson['bucketName']
       
-      print('Source Bucket: '+source_bucket_name)
+      print('Source Bucket:'+source_bucket_name)
       message = event['Records'][0]['Sns']['Message']
       #convert the message to json style
       messageJson = json.loads(message)
       source_bucket_name = messageJson['bucketName']
         
-          # determining which cbc bucket the file came from
-      prefix='' 
+      # determining which cbc bucket the file came from
+      prefix = '' 
         
-          # Filename of object (with path) and Etag
+      # Filename of object (with path) and Etag
       file_key_name = messageJson['key']
       
-      print('Source Bucket:'+ source_bucket_name)
       print('Key file: '+ file_key_name)
-      source_etag = s3_client.head_object(Bucket=source_bucket_name,Key=file_key_name)['ETag'][1:-1]  
-      print('Source Etag:'+ source_etag)
+      
       if "guid" in messageJson:
        if messageJson['scanResult'] == "Clean": 
         # defining constants for CBCs
-        CBC01='cbc01'
-        CBC02='cbc02'
-        CBC03='cbc03'
-        CBC04='cbc04'
+        CBC01 = 'cbc01'
+        CBC02 = 'cbc02'
+        CBC03 = 'cbc03'
+        CBC04 = 'cbc04'
        
       
         
@@ -87,10 +83,10 @@ def lambda_handler(event, context):
                 mydb = connectToDB(user, password, host, dbname)
                 #call the function to copy file
                 result = fileCopy(s3_client, event, destination_bucket_name)
-                resultTuple = (result['file_name'], result['file_location'], result['file_added_on'], result['file_last_processed_on'], result['file_status'], result['file_origin'], result['file_type'], result['file_action'], result['file_submitted_by'], result['updated_by'])
+                resultTuple = (result['file_name'], result['file_location'], result['file_added_on'], result['file_last_processed_on'], result['file_status'], result['file_origin'], result['file_type'], result['file_action'], result['file_submitted_by'], result['updated_by'], result['file_md5'])
                 
                 #record the copy file result 
-                excution2 = "INSERT INTO "+ JOB_TABLE_NAME+" VALUES (NULL,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)" 
+                excution2 = "INSERT INTO "+ JOB_TABLE_NAME+" VALUES (NULL,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)" 
                 mydbCursor = mydb.cursor(prepared=True)
                 mydbCursor.execute(excution2, resultTuple)
                 
