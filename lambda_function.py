@@ -1,9 +1,9 @@
 import boto3
 import json
 import logging
-from seronetCopyFiles import *
-from seronetdBUtilities import *
-from seronetSnsMessagePublisher import *
+from seronetCopyFiles import fileCopy
+from seronetdBUtilities import connectToDB
+from seronetSnsMessagePublisher import sns_publisher
 
 
 def lambda_handler(event, context):
@@ -13,17 +13,15 @@ def lambda_handler(event, context):
     logger = logging.getLogger()
     logger.setLevel(logging.INFO)
     ssm = boto3.client("ssm")
-    sns = boto3.client('sns')
+    
     
     try:
-      host=ssm.get_parameter(Name="db_host", WithDecryption=True).get("Parameter").get("Value")
-      user=ssm.get_parameter(Name="lambda_db_username", WithDecryption=True).get("Parameter").get("Value")
+      host = ssm.get_parameter(Name="db_host", WithDecryption=True).get("Parameter").get("Value")
+      user = ssm.get_parameter(Name="lambda_db_username", WithDecryption=True).get("Parameter").get("Value")
       dbname = ssm.get_parameter(Name="jobs_db_name", WithDecryption=True).get("Parameter").get("Value")
-      password=ssm.get_parameter(Name="lambda_db_password", WithDecryption=True).get("Parameter").get("Value")
+      password = ssm.get_parameter(Name="lambda_db_password", WithDecryption=True).get("Parameter").get("Value")
       destination_bucket_name = ssm.get_parameter(Name="file_destination_bucket", WithDecryption=True).get("Parameter").get("Value")
-      JOB_TABLE_NAME='table_file_remover'
-      
-      
+      JOB_TABLE_NAME = 'table_file_remover'
     
       
       
@@ -34,29 +32,27 @@ def lambda_handler(event, context):
        
       source_bucket_name = messageJson['bucketName']
       
-      print('Source Bucket: '+source_bucket_name)
+      print('Source Bucket:'+source_bucket_name)
       message = event['Records'][0]['Sns']['Message']
       #convert the message to json style
       messageJson = json.loads(message)
       source_bucket_name = messageJson['bucketName']
         
-          # determining which cbc bucket the file came from
-      prefix='' 
-        
-          # Filename of object (with path) and Etag
+      # determining which cbc bucket the file came from
+      prefix = ''
+      
+      # Filename of object (with path) and Etag
       file_key_name = messageJson['key']
       
-      print('Source Bucket:'+ source_bucket_name)
       print('Key file: '+ file_key_name)
-      source_etag = s3_client.head_object(Bucket=source_bucket_name,Key=file_key_name)['ETag'][1:-1]  
-      print('Source Etag:'+ source_etag)
+      
       if "guid" in messageJson:
-       if messageJson['scanResult'] == "Clean": 
-        # defining constants for CBCs
-        CBC01='cbc01'
-        CBC02='cbc02'
-        CBC03='cbc03'
-        CBC04='cbc04'
+          if messageJson['scanResult'] == "Clean":
+              # defining constants for CBCs
+              CBC01 = 'cbc01'
+              CBC02 = 'cbc02'
+              CBC03 = 'cbc03'
+              CBC04 = 'cbc04'
        
       
         
@@ -75,7 +71,7 @@ def lambda_handler(event, context):
         elif  CBC03 in source_bucket_name:
             prefix=CBC03
         elif  CBC04 in source_bucket_name:
-            prefix=CBC04        
+            prefix=CBC04
         else:
             prefix='UNMATCHED'
        
@@ -87,10 +83,10 @@ def lambda_handler(event, context):
                 mydb = connectToDB(user, password, host, dbname)
                 #call the function to copy file
                 result = fileCopy(s3_client, event, destination_bucket_name)
-                resultTuple = (result['file_name'], result['file_location'], result['file_added_on'], result['file_last_processed_on'], result['file_status'], result['file_origin'], result['file_type'], result['file_action'], result['file_submitted_by'], result['updated_by'])
+                resultTuple = (result['file_name'], result['file_location'], result['file_added_on'], result['file_last_processed_on'], result['file_status'], result['file_origin'], result['file_type'], result['file_action'], result['file_submitted_by'], result['updated_by'], result['file_md5'])
                 
                 #record the copy file result 
-                excution2 = "INSERT INTO "+ JOB_TABLE_NAME+" VALUES (NULL,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)" 
+                excution2 = "INSERT INTO "+ JOB_TABLE_NAME+" VALUES (NULL,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)" 
                 mydbCursor = mydb.cursor(prepared=True)
                 mydbCursor.execute(excution2, resultTuple)
                 
@@ -111,7 +107,7 @@ def lambda_handler(event, context):
                 message='File Processed'
             except Exception as e:
                 raise e
-            finally: 
+            finally:
                 #close the connection
                 mydb.commit()
                 mydb.close()
@@ -127,7 +123,7 @@ def lambda_handler(event, context):
     return {
        'statusCode': statusCode,
        'body': json.dumps(message)
- }  
+    }  
   
   
   
