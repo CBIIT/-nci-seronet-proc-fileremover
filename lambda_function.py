@@ -6,6 +6,7 @@ from seronetdBUtilities import connectToDB
 from seronetSnsMessagePublisher import sns_publisher
 
 
+
 def lambda_handler(event, context):
     print('Loading function')
     # boto3 S3 initialization
@@ -22,6 +23,8 @@ def lambda_handler(event, context):
       password = ssm.get_parameter(Name="lambda_db_password", WithDecryption=True).get("Parameter").get("Value")
       destination_bucket_name = ssm.get_parameter(Name="file_destination_bucket", WithDecryption=True).get("Parameter").get("Value")
       JOB_TABLE_NAME = 'table_file_remover'
+      
+      
     
       
       
@@ -73,12 +76,24 @@ def lambda_handler(event, context):
                     #connect to RDS
                     mydb = connectToDB(user, password, host, dbname)
                     #call the function to copy file
-                    result = fileCopy(s3_client, event, destination_bucket_name)
-                    resultTuple = (result['file_name'], result['file_location'], result['file_added_on'], result['file_last_processed_on'], result['file_status'], result['file_origin'], result['file_type'], result['file_action'], result['file_submitted_by'], result['updated_by'], result['file_md5'])
+                    maxtry=3
+                    result = fileCopy(s3_client, event, destination_bucket_name, maxtry)
                     
+                    execution1 = f"SELECT COUNT(*) FROM {JOB_TABLE_NAME} WHERE file_md5 = %s"
+                    mydbCursor=mydb.cursor(prepared=True)
+                    file_md5=str(result['file_md5'])
+                    
+                    mydbCursor.execute(execution1,(file_md5,))
+                    sqlresult = mydbCursor.fetchone()
+                    if(sqlresult[0]>0 and result['file_status']=="COPY_SUCCESSFUL"):
+                        result['file_status']="COPY_SUCCESSFUL_DUPLICATE"
+                    elif(sqlresult[0]>0 and result['file_status']=="COPY_UNSUCCESSFUL"):
+                        result['file_status']="COPY_UNSUCCESSFUL_DUPLICATE"
+                    
+                    
+                    resultTuple = (result['file_name'], result['file_location'], result['file_added_on'], result['file_last_processed_on'], result['file_status'], result['file_origin'], result['file_type'], result['file_action'], result['file_submitted_by'], result['updated_by'], result['file_md5'])
                     #record the copy file result 
                     excution2 = "INSERT INTO "+ JOB_TABLE_NAME+" VALUES (NULL,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)" 
-                    mydbCursor = mydb.cursor(prepared=True)
                     mydbCursor.execute(excution2, resultTuple)
                     
                     
@@ -115,18 +130,3 @@ def lambda_handler(event, context):
        'statusCode': statusCode,
        'body': json.dumps(message)
     }  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-
-   
- 
