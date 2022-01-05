@@ -54,7 +54,7 @@ def lambda_handler(event, context):
             newestScanResults = len(messageJson['scanResults']) - 1
             if messageJson['scanResults'][newestScanResults]['result'] == 'Clean':
                 # defining constants for CBCs
-                bucket_name = ssm.get_parameter(Name = "bucket_name_list", WithDecryption=True).get("Parameter").get("Value")  
+                bucket_name = ssm.get_parameter(Name = "bucket_name_list", WithDecryption=True).get("Parameter").get("Value")
                 bucket_name_list = bucket_name.split(",")
             
                 prefix='UNMATCHED'
