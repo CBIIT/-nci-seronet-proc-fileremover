@@ -56,6 +56,7 @@ def lambda_handler(event, context):
                 # defining constants for CBCs
                 bucket_name = ssm.get_parameter(Name = "bucket_name_list", WithDecryption=True).get("Parameter").get("Value")
                 bucket_name_list = bucket_name.split(",")
+                bucket_name_list = [s.strip() for s in bucket_name_list]
             
                 prefix='UNMATCHED'
                 for CBC in bucket_name_list:
@@ -127,4 +128,4 @@ def lambda_handler(event, context):
     return {
        'statusCode': statusCode,
        'body': json.dumps(message)
-    }  
+    } 
