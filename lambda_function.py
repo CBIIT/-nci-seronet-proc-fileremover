@@ -54,22 +54,15 @@ def lambda_handler(event, context):
             newestScanResults = len(messageJson['scanResults']) - 1
             if messageJson['scanResults'][newestScanResults]['result'] == 'Clean':
                 # defining constants for CBCs
-                CBC01 = 'cbc01'
-                CBC02 = 'cbc02'
-                CBC03 = 'cbc03'
-                CBC04 = 'cbc04'
+                bucket_name = ssm.get_parameter(Name = "bucket_name_list", WithDecryption=True).get("Parameter").get("Value")
+                bucket_name_list = bucket_name.split(",")
+                bucket_name_list = [s.strip() for s in bucket_name_list]
             
-            
-                if CBC01 in source_bucket_name:
-                    prefix=CBC01
-                elif  CBC02 in source_bucket_name:
-                    prefix=CBC02
-                elif  CBC03 in source_bucket_name:
-                    prefix=CBC03
-                elif  CBC04 in source_bucket_name:
-                    prefix=CBC04
-                else:
-                    prefix='UNMATCHED'
+                prefix='UNMATCHED'
+                for CBC in bucket_name_list:
+                    if CBC in source_bucket_name:
+                        prefix = CBC
+    
             
                 print('Prefix is: '+prefix)
                     # Copy Source Object
@@ -135,4 +128,4 @@ def lambda_handler(event, context):
     return {
        'statusCode': statusCode,
        'body': json.dumps(message)
-    }  
+    } 
