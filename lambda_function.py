@@ -119,8 +119,7 @@ def lambda_handler(event, context):
 
           except Exception as error:
             statusCode=400
-            raise error
-            # print('the message json is not correct')
+            print('the message json is not correct')
 
     except Exception as err:
       raise err
