@@ -6,7 +6,6 @@ from seronetdBUtilities import connectToDB
 from seronetSnsMessagePublisher import sns_publisher
 
 
-
 def lambda_handler(event, context):
     print('Loading function')
     # boto3 S3 initialization
@@ -72,7 +71,7 @@ def lambda_handler(event, context):
                         mydb = connectToDB(user, password, host, dbname)
                         #call the function to copy file
                         maxtry=3
-                        result = fileCopy(s3_client, event, destination_bucket_name, maxtry)
+                        result = fileCopy(s3_client, event, destination_bucket_name, maxtry, bucket_name_list)
                         
                         execution1 = f"SELECT COUNT(*) FROM {JOB_TABLE_NAME} WHERE file_md5 = %s"
                         mydbCursor=mydb.cursor(prepared=True)
@@ -128,4 +127,4 @@ def lambda_handler(event, context):
     return {
        'statusCode': statusCode,
        'body': json.dumps(message)
-    } 
+    }  
