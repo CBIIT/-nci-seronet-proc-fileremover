@@ -30,6 +30,7 @@ def lambda_handler(event, context):
       #read the message from the event
       message = event['Records'][0]['Sns']['Message']
       #convert the message to json style
+      print(message)
       messageJson = json.loads(message)
        
       source_bucket_name = messageJson['bucketName']
@@ -119,7 +120,8 @@ def lambda_handler(event, context):
 
           except Exception as error:
             statusCode=400
-            print('the message json is not correct')
+            #print('the message json is not correct')
+            raise error
 
     except Exception as err:
       raise err
