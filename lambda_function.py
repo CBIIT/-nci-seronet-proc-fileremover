@@ -22,6 +22,8 @@ def lambda_handler(event, context):
       password = ssm.get_parameter(Name="lambda_db_password", WithDecryption=True).get("Parameter").get("Value")
       destination_bucket_name = ssm.get_parameter(Name="file_destination_bucket", WithDecryption=True).get("Parameter").get("Value")
       JOB_TABLE_NAME = 'table_file_remover'
+      accountId = boto3.client('sts').get_caller_identity().get('Account')
+      # print('Account ID is: '+accountId)
       
       
     
@@ -48,8 +50,8 @@ def lambda_handler(event, context):
       file_key_name = messageJson['key']
       
       print('Key file: '+ file_key_name)
-      
-      if "guid" in messageJson:
+                      
+      if "guid" in messageJson and accountId == messageJson['accountId']:
           try:
             newestScanResults = len(messageJson['scanResults']) - 1
             if messageJson['scanResults'][newestScanResults]['result'] == 'Clean':
@@ -122,11 +124,13 @@ def lambda_handler(event, context):
             statusCode=400
             #print('the message json is not correct')
             raise error
-
+      else:
+          statusCode=400
+          print('The message json is incorrect')
     except Exception as err:
       raise err
         
     return {
        'statusCode': statusCode,
        'body': json.dumps(message)
-    }  
+    }
