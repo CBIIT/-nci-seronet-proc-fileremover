@@ -31,7 +31,7 @@ def lambda_handler(event, context):
 
       try:
           messageJson = json.loads(message)
-      except TypeError:
+      except Exception as e:
           messageJson = 'useless_message'
 
       if messageJson != 'useless_message':
