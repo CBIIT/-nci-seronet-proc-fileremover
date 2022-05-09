@@ -33,6 +33,7 @@ def lambda_handler(event, context):
           messageJson = json.loads(message)
       except Exception as e:
           messageJson = 'useless_message'
+          print(e)
 
       if messageJson != 'useless_message':
           source_bucket_name = messageJson['bucketName']
