@@ -5,7 +5,6 @@ from seronetCopyFiles import fileCopy
 from seronetdBUtilities import connectToDB
 from seronetSnsMessagePublisher import sns_publisher
 
-
 def lambda_handler(event, context):
     print('Loading function')
     # boto3 S3 initialization
@@ -26,23 +25,14 @@ def lambda_handler(event, context):
       
       #read the message from the event
       message = event['Records'][0]['Sns']['Message']
-      #convert the message to json style
+      notificationType = event['Records'][0]['Sns']['MessageAttributes']['notificationType']['Value']
       print(message)
 
-      try:
-          messageJson = json.loads(message)
-      except Exception as e:
-          messageJson = 'useless_message'
-          print(e)
-
-      if messageJson != 'useless_message':
-          source_bucket_name = messageJson['bucketName']
-          
-          print('Source Bucket:'+source_bucket_name)
-          message = event['Records'][0]['Sns']['Message']
+      if notificationType == 'scanResult':
           #convert the message to json style
           messageJson = json.loads(message)
           source_bucket_name = messageJson['bucketName']
+          print('Source Bucket:'+source_bucket_name)
           # determining which cbc bucket the file came from
           prefix = ''
           # Filename of object (with path) and Etag
