@@ -111,7 +111,7 @@ def lambda_handler(event, context):
               print('The message json is incorrect')
       else:
           statusCode=400
-          print('The sns message is incorrect')
+          print('The sns message is not a scan result')
           
     except Exception as err:
       raise err
