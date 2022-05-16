@@ -14,21 +14,20 @@ def lambda_handler(event, context):
     ssm = boto3.client("ssm")
   
     try:
-      host = ssm.get_parameter(Name="db_host", WithDecryption=True).get("Parameter").get("Value")
-      user = ssm.get_parameter(Name="lambda_db_username", WithDecryption=True).get("Parameter").get("Value")
-      dbname = ssm.get_parameter(Name="jobs_db_name", WithDecryption=True).get("Parameter").get("Value")
-      password = ssm.get_parameter(Name="lambda_db_password", WithDecryption=True).get("Parameter").get("Value")
-      destination_bucket_name = ssm.get_parameter(Name="file_destination_bucket", WithDecryption=True).get("Parameter").get("Value")
-      JOB_TABLE_NAME = 'table_file_remover'
-      accountId = boto3.client('sts').get_caller_identity().get('Account')
-      # print('Account ID is: '+accountId)
-      
       #read the message from the event
       message = event['Records'][0]['Sns']['Message']
       notificationType = event['Records'][0]['Sns']['MessageAttributes']['notificationType']['Value']
       print(message)
-
+      
       if notificationType == 'scanResult':
+          host = ssm.get_parameter(Name="db_host", WithDecryption=True).get("Parameter").get("Value")
+          user = ssm.get_parameter(Name="lambda_db_username", WithDecryption=True).get("Parameter").get("Value")
+          dbname = ssm.get_parameter(Name="jobs_db_name", WithDecryption=True).get("Parameter").get("Value")
+          password = ssm.get_parameter(Name="lambda_db_password", WithDecryption=True).get("Parameter").get("Value")
+          destination_bucket_name = ssm.get_parameter(Name="file_destination_bucket", WithDecryption=True).get("Parameter").get("Value")
+          JOB_TABLE_NAME = 'table_file_remover'
+          accountId = boto3.client('sts').get_caller_identity().get('Account')
+          # print('Account ID is: '+accountId)
           #convert the message to json style
           messageJson = json.loads(message)
           source_bucket_name = messageJson['bucketName']
